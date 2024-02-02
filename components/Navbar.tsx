@@ -97,12 +97,12 @@ if (typeof document !== 'undefined') {
 
 
   return (
-    <nav className="flex flex-wrap items-center justify-between w-full h-15 gap-4 px-4 pt-4 pb-20 font-sans text-white md:px-20 md:gap-10">
+    <nav className="flex flex-wrap items-center justify-between w-full h-5 gap-4 px-4 pt-4 pb-20 font-sans text-white md:px-20 md:gap-10">
       <div className="flex items-center mr-6">
         <Link href="/" className="text-2xl no-underline hover:text-slate-300 mx-2">
           GitTranslate
         </Link>
-        <GitIcon className="h-2 w-2" />
+        <GitIcon className="h-2 w-2 cursor-pointer" />
       </div>
       
 

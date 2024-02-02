@@ -35,6 +35,16 @@ export default function Home() {
   const [projectId, setProjectId] = useState<string>('');
   const [data, setData] = useState<GitLabItem[]>([]);
   const [tag, setTag] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 4; // Number of rows per page
+  
+  //pagination feat
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const totalPages = Math.ceil(data.length / rowsPerPage);
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
 
   
 
@@ -168,9 +178,12 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`https://gitlab.com/api/v4/projects/${projectId}/repository/tree`);
+        const response = await fetch(`https://gitlab.com/api/v4/projects/${projectId}/repository/tree?ref_name=main&recursive=true&pagination=none`);
         const jsonData = await response.json();
-        setData(jsonData);
+
+        const filteredData = jsonData.filter((item: { type: string; }) => item.type !== "tree");
+        
+        setData(filteredData);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -178,6 +191,9 @@ export default function Home() {
 
     fetchData();
   }, [projectId]);
+
+
+
 
   
 
@@ -231,9 +247,8 @@ export default function Home() {
         </div> <br />
 
 
-        { projectId
-         && 
-        <div>
+        { projectId && 
+      <div>
       <Table className="bg-gray-800 text-white">
         <TableHeader>
           <TableRow>
@@ -243,11 +258,12 @@ export default function Home() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((item: GitLabItem) => (
-            <TableRow 
-            key={item.id} 
-            onClick={() => fetchRawContent(item.id, item.name)}
-            className="bg-slate-900 hover:bg-slate-950 cursor-pointer">
+        {Array.isArray(data) &&
+                data.slice(startIndex, endIndex).map((item: GitLabItem) => (
+                  <TableRow
+                    key={item.id}
+                    onClick={() => fetchRawContent(item.id, item.name)}
+                    className="bg-slate-900 hover:bg-slate-950 cursor-pointer">
               <TableCell>
                 <div className="flex items-center space-x-2">
                   <FileCodeIcon className="text-yellow-400" />
@@ -260,6 +276,24 @@ export default function Home() {
           ))}
         </TableBody>
       </Table>
+
+      <div className="pagination-controls mt-4 flex justify-center items-center space-x-4">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-gray-600 text-white rounded-md cursor-pointer"
+            >
+              Previous
+            </button>
+            <span className="text-white">{`Page ${currentPage} of ${totalPages}`}</span>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 bg-gray-600 text-white rounded-md cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
     </div>
     }
 
