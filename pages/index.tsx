@@ -240,9 +240,9 @@ export default function Home() {
           <div className="text-4xl font-bold">AI Powered Localization Effort</div>
         </div>
 
-        <div className="mt-6 text-center text-sm">
+        {/* <div className="mt-6 text-center text-sm">
           <APIKeyInput apiKey={apiKey} onChange={handleApiKeyChange} />
-        </div>
+        </div> */}
 
         <div className="mt-6 text-center text-sm">
         <input

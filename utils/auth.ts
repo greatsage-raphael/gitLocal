@@ -1,11 +1,11 @@
-// src/utils/gitlabAuth.ts
 import axios from 'axios';
+
 
 const GitLabAuth = {
   clientId: 'a851c9d8df9d92bd50fcc556137b7026e190bed99b3093512bc3f68c8a229095',
-  clientSecret: 'gloas-5f5ebad3dc9decc8ec77f141c257989b316eff374e88e238431c248ca9ec74d5',
+  clientSecret:'gloas-5f5ebad3dc9decc8ec77f141c257989b316eff374e88e238431c248ca9ec74d5',
   redirectUri: 'http://localhost:3000/',
-  gitLabBaseUrl: 'https://gitlab.com', // Change to your GitLab instance URL
+  gitLabBaseUrl: 'https://gitlab.com',
 
   async getAuthUrl(state: string, scope: string) {
     const authUrl = `${this.gitLabBaseUrl}/oauth/authorize?client_id=${this.clientId}&redirect_uri=${this.redirectUri}&response_type=code&state=${state}&scope=${scope}`;
