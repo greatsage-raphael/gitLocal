@@ -3,6 +3,7 @@ import { useState, useEffect, SVGProps } from "react";
 import GitLabAuth from '../utils/auth';
 import { useRouter } from 'next/router';
 import axios from "axios";
+import Image from "next/image";
 
 export default function Navbar() {
   
@@ -107,7 +108,7 @@ if (typeof document !== 'undefined') {
 <div className="ml-auto">
           {userInfo ? (
             // Render avatar if userInfo is available
-            <img
+            <Image
               src={userInfo.avatar_url}
               alt={userInfo.name}
               className="rounded-full w-8 h-8 cursor-pointer"
