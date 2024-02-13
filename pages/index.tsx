@@ -7,7 +7,6 @@ import { OpenAIModel, TranslateBody } from '@/types/types';
 import Head from 'next/head';
 import { SVGProps, useEffect, useState } from 'react';
 import { TableHead, TableRow, TableHeader, TableCell, TableBody, Table } from "../components/Table"
-
 import NavBar from '@/components/Navbar';
 
 
@@ -30,6 +29,7 @@ export default function Home() {
   const [outputCode, setOutputCode] = useState<string>('');
   const [model, setModel] = useState<OpenAIModel>('gpt-3.5-turbo');
   const [loading, setLoading] = useState<boolean>(false);
+  const [loader, setLoader] = useState<boolean>(false);
   const [hasTranslated, setHasTranslated] = useState<boolean>(false);
   const [apiKey, setApiKey] = useState<string>('');
   const [projectId, setProjectId] = useState<string>('');
@@ -195,7 +195,29 @@ export default function Home() {
 
 
 
-  
+  async function generateExplanation() {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setLoader(true);
+    //console.log("Input", inputCode)
+
+    const res = await fetch("/api/explain", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body:  JSON.stringify({ code: inputCode }),
+    });
+
+    let explanation = await res.json();
+    console.log("Explain shit", explanation)
+    if (res.status !== 200) {
+      console.log("fail:", explanation)
+    } else {
+      
+      //setOutputCode(explanation)
+    }
+    setLoader(false);
+  }
 
 
 
@@ -243,6 +265,14 @@ export default function Home() {
             disabled={loading}
           >
             {loading ? 'Translating...' : 'Translate'}
+          </button>
+
+          <button
+            className="w-[140px] cursor-pointer rounded-md bg-violet-500 px-4 py-2 font-bold hover:bg-violet-600 active:bg-violet-700"
+            onClick={() => generateExplanation()}
+            disabled={loading}
+          >
+            {loading ? 'Explaining...' : 'Explain'}
           </button>
         </div> <br />
 
@@ -374,5 +404,6 @@ export default function Home() {
   }
   
 }
+
 
 

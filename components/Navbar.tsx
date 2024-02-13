@@ -6,11 +6,9 @@ import axios from "axios";
 
 export default function Navbar() {
   
-  //const [showMobileMenu, setShowMobileMenu] = useState(false);
+  
   const [authUrl, setAuthUrl] = useState<string | null>(null);
-  //const [accessToken, setAccessToken] = useState<string>('');
   const [userInfo, setUserInfo] = useState<any>(null);
-  //const [avatar_url, setProfile] = useState<any>(null);
 
   const handleLogin = () => {
     
@@ -102,7 +100,7 @@ if (typeof document !== 'undefined') {
         <Link href="/" className="text-2xl no-underline hover:text-slate-300 mx-2">
           GitTranslate
         </Link>
-        <GitIcon className="h-2 w-2 cursor-pointer" />
+        <GitIcon className="h-2 w-2" />
       </div>
       
 
@@ -134,7 +132,7 @@ if (typeof document !== 'undefined') {
 
 function GitIcon(p: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill-rule="evenodd">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fillRule="evenodd">
       <path d="M16 30.739L21.892 12.6H10.108z" fill="#e24329"/>
       <path d="M16 30.739L10.108 12.6H1.85z" fill="#fc6d26"/>
       <path d="M1.85 12.6L0.06 18.115a1.22 1.22 0 0 0 .444 1.364L16 30.739z" fill="#fca326"/>
