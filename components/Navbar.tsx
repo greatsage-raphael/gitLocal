@@ -111,6 +111,8 @@ if (typeof document !== 'undefined') {
             <Image
               src={userInfo.avatar_url}
               alt={userInfo.name}
+              width={80} // Add the width property with the appropriate value
+              height={80}
               className="rounded-full w-8 h-8 cursor-pointer"
             />
           ) : (
