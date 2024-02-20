@@ -54,6 +54,47 @@ export default function Navbar() {
           console.log('User Information:', user);
           setUserInfo(user);
           console.log("Avatar", user.avatar_url)
+
+          const requestBody = {
+            // Provide the necessary data here
+            git_id: user.id,
+            name: user.name,
+            username: user.username,
+            avatar_url: user.avatar_url,
+            web_url: user.web_url,
+            email: user.email,
+            resultlist: [
+              {
+                inputcode: "some code",
+                outputcode: "some code",
+                originalreporturl: "https://example.com/report3"
+              }
+            ]
+          }
+          
+
+          const InsertData = async () => { 
+            try {
+              const response = await fetch('/api/insert', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+              });
+        
+              if (!response.ok) {
+                throw new Error('Failed to insert data');
+              }
+        
+              const data = await response.json();
+              console.log('Response data:', data);
+            } catch (error) {
+              console.error('Error inserting dummy data:', error);
+            }
+          };
+        
+          InsertData()
         })
         .catch((error) => {
           // Handle errors appropriately
@@ -63,6 +104,7 @@ export default function Navbar() {
       // Handle the case where either code or state is missing
       console.error('Missing code or state in the query parameters');
     }
+    
   }, [router.query]);
 
   async function getUserInfo(accessToken: string) {
@@ -79,29 +121,35 @@ export default function Navbar() {
     return response.data;
   }
 
-  // Retrieve the access token from cookies
-if (typeof document !== 'undefined') {
-  const cookies = document.cookie.split(';');
-  const accessTokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='));
-  const storedAccessToken = accessTokenCookie ? accessTokenCookie.split('=')[1] : null;
+//   // Retrieve the access token from cookies
+// if (typeof document !== 'undefined') {
+//   const cookies = document.cookie.split(';');
+//   const accessTokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='));
+//   const storedAccessToken = accessTokenCookie ? accessTokenCookie.split('=')[1] : null;
 
-  if (storedAccessToken) {
-    // Use the stored access token as needed
-    console.log('Stored Access Token:', storedAccessToken);
-  } else {
-    // Access token is not available
-    console.log('Access Token not found');
-  }
-}
+//   if (storedAccessToken) {
+//     // Use the stored access token as needed
+//     console.log('Stored Access Token:', storedAccessToken);
+//   } else {
+//     // Access token is not available
+//     console.log('Access Token not found');
+//   }
+// }
 
 
   return (
-    <nav className="flex flex-wrap items-center justify-between w-full h-5 gap-4 px-4 pt-4 pb-20 font-sans text-white md:px-20 md:gap-10">
+    <nav className="flex flex-wrap items-center justify-between w-full h-5 gap-4 px-4 pt-4 pb-20 font-sans text-white md:px-20 md:gap-10 bg-[#0E1117]">
       <div className="flex items-center mr-6">
         <Link href="/" className="text-2xl no-underline hover:text-slate-300 mx-2">
           GitTranslate
         </Link>
         <GitIcon className="h-2 w-2" />
+      </div>
+
+      <div className="flex items-center mr-6">
+        <Link href="/translations" className="text-2xl no-underline hover:text-slate-300 mx-2">
+          Translations
+        </Link>
       </div>
       
 
@@ -123,7 +171,8 @@ if (typeof document !== 'undefined') {
                 type="button"
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 border border-transparent rounded-md cursor-pointer hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign In
+                Sign In 
+                
               </button>
             </>
           )}

@@ -1,19 +1,13 @@
 import { CodeBlock } from '@/components/CodeBlock';
 import { LanguageSelect } from '@/components/LanguageSelect';
-import { ModelSelect } from '@/components/ModelSelect';
 import { TextBlock } from '@/components/TextBlock';
-import { OpenAIModel, TranslateBody } from '@/types/types';
+import { TranslateBody } from '@/types/types';
 import Head from 'next/head';
 import { SVGProps, useEffect, useState } from 'react';
-import {
-  TableHead,
-  TableRow,
-  TableHeader,
-  TableCell,
-  TableBody,
-  Table,
-} from '../components/Table';
-import NavBar from '@/components/Navbar';
+import { TreeView } from '@mui/x-tree-view/TreeView';
+import { TreeItem } from '@mui/x-tree-view/TreeItem';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 interface GitLabDataProps {
   projectId: string;
@@ -24,6 +18,7 @@ interface GitLabItem {
   name: string;
   type: string;
   path: string;
+  children?: GitLabItem[];
 }
 
 export default function Home() {
@@ -31,33 +26,24 @@ export default function Home() {
   const [outputLanguage, setOutputLanguage] = useState<string>('Python');
   const [inputCode, setInputCode] = useState<string>('');
   const [outputCode, setOutputCode] = useState<string>('');
-  const [model, setModel] = useState<OpenAIModel>('gpt-3.5-turbo');
   const [loading, setLoading] = useState<boolean>(false);
   const [loader, setLoader] = useState<boolean>(false);
   const [hasTranslated, setHasTranslated] = useState<boolean>(false);
-  const [apiKey, setApiKey] = useState<string>('');
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [projectId, setProjectId] = useState<string>('');
   const [data, setData] = useState<GitLabItem[]>([]);
+  const [tree, setTreeView] = useState<GitLabItem[]>([]);
   const [tag, setTag] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 4; // Number of rows per page
-
-  //pagination feat
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const totalPages = Math.ceil(data.length / rowsPerPage);
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
+  const [textOutput, setTextOutput] = useState<boolean>(false);
+  const [accessToken, setAccessToken] = useState<string>('');
+  const [encodedID, setEncodedID] = useState<string>('');
+  const [userId, setUserId] = useState<string>('');
+  const [path, setPath] = useState<string>('Fetched Repo');
+  const [currentPath, setCurrentPath] = useState<string[]>([]);
+  
 
   const handleTranslate = async () => {
-    const maxCodeLength = model === 'gpt-3.5-turbo' ? 6000 : 12000;
-
-    if (!apiKey) {
-      alert('Please enter an API key.');
-      return;
-    }
-
+    const maxCodeLength = 12000;
     if (inputLanguage === outputLanguage) {
       alert('Please select different languages.');
       return;
@@ -84,8 +70,6 @@ export default function Home() {
       inputLanguage,
       outputLanguage,
       inputCode,
-      model,
-      apiKey,
     };
 
     const response = await fetch('/api/translate', {
@@ -140,12 +124,6 @@ export default function Home() {
     document.body.removeChild(el);
   };
 
-  const handleApiKeyChange = (value: string) => {
-    setApiKey(value);
-
-    localStorage.setItem('apiKey', value);
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProjectId(e.target.value);
   };
@@ -156,18 +134,13 @@ export default function Home() {
     }
   }, [outputLanguage, handleTranslate, hasTranslated]);
 
-  useEffect(() => {
-    const apiKey = localStorage.getItem('apiKey');
-
-    if (apiKey) {
-      setApiKey(apiKey);
-    }
-  }, []);
+  
 
   const fetchRawContent = async (blobId: string, name: string) => {
+    setOutputCode('');
     try {
       const response = await fetch(
-        `https://gitlab.com/api/v4/projects/${projectId}/repository/blobs/${blobId}/raw`,
+        `https://gitlab.com/api/v4/projects/${encodedID}/repository/blobs/${blobId}/raw`,
       );
       const rawContent = await response.text();
       setInputCode(rawContent);
@@ -179,17 +152,47 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
+
+      function encodeGitlabUrl(url: string) {
+        if (/^\d+$/.test(url)) {
+            return url;
+        } else {
+        const domain = 'gitlab.com/';
+        const pattern = /(?:https?:\/\/)?(?:www\.)?(.+)/;
+        const match = url.match(pattern);
+    
+        if (match && match[1].includes(domain)) {
+            const path = match[1].substring(match[1].indexOf(domain) + domain.length);
+            setPath(path)
+            return encodeURIComponent(path);
+        } else {
+            return "Invalid URL format";
+        }
+    }
+    }
+
+      const id = encodeGitlabUrl(projectId)
+      setEncodedID(id)
+
       try {
         const response = await fetch(
-          `https://gitlab.com/api/v4/projects/${projectId}/repository/tree?ref_name=main&recursive=true&pagination=none`,
+          `https://gitlab.com/api/v4/projects/${id}/repository/tree?ref_name=main&recursive=true&pagination=none`,
         );
+
+        const tree = await fetch(
+          `https://gitlab.com/api/v4/projects/${id}/repository/tree`,
+        );
+
+        
         const jsonData = await response.json();
+        const treeData = await tree.json();
 
         const filteredData = jsonData.filter(
           (item: { type: string }) => item.type !== 'tree',
         );
 
         setData(filteredData);
+        setTreeView(treeData);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -200,8 +203,7 @@ export default function Home() {
 
   async function generateExplanation() {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    setLoader(true);
-    //console.log("Input", inputCode)
+    setTextOutput(true)
 
     const res = await fetch('/api/explain', {
       method: 'POST',
@@ -212,14 +214,119 @@ export default function Home() {
     });
 
     let explanation = await res.json();
-    console.log('Explain shit', explanation);
+    // console.log('Explain shit', explanation);
+    const combinedString = explanation.join('');
+    console.log('Explain shit', combinedString);
     if (res.status !== 200) {
       console.log('fail:', explanation);
     } else {
-      //setOutputCode(explanation)
+      setOutputCode(combinedString)
     }
     setLoader(false);
   }
+
+
+const renderTree = (nodes: GitLabItem[], parentPath: string = '') => {
+  return nodes.map(node => (
+    <TreeItem
+      key={node.id}
+      nodeId={node.id}
+      label={node.name}
+      onClick={() => handleNodeClick(node)}
+      // Check if the node is a folder (tree) and render its children if expanded
+      // Otherwise, render nothing
+      children={node.type === 'tree' && node.path.startsWith(parentPath)
+        ? renderTree(node.children || [], node.path)
+        : null}
+      // Set the tree node's icon based on its type (folder or file)
+      icon={node.type === 'tree' ? <FolderIcon /> : <FileCodeIcon />}
+    />
+  ));
+};
+
+// Modify handleNodeClick function
+const handleNodeClick = async (node: GitLabItem) => {
+    if (node.type === 'tree') {
+      try {
+        const response = await fetch(`https://gitlab.com/api/v4/projects/${encodedID}/repository/tree?path=${node.path}`);
+        const treeData = await response.json();
+        // Update tree view with the new data
+        setTreeView(treeData);
+        // Push the clicked folder's path onto the current path stack
+        setCurrentPath([...currentPath, node.path]);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    } else {
+      // Handle file click, you can add your logic here
+      // For example, fetch raw content of the file
+      fetchRawContent(node.id, node.name);
+    }
+  };
+
+  // Add a function to handle navigation back
+const handleNavigateBack = () => {
+    // Pop the last path from the current path stack
+    const newPathStack = [...currentPath];
+    newPathStack.pop();
+    setCurrentPath(newPathStack);
+    // Fetch data for the parent directory
+    const parentPath = newPathStack[newPathStack.length - 1] || ''; // Get the parent path or use an empty string if it's the root
+    fetchData(parentPath);
+  };
+
+  // Modify fetch data function to accept a path parameter
+const fetchData = async (path: string = '') => {
+    try {
+      const response = await fetch(`https://gitlab.com/api/v4/projects/${encodedID}/repository/tree?path=${path}`);
+      const treeData = await response.json();
+      // Update tree view with the new data
+      setTreeView(treeData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+
+const treeData = {
+  id: 'root',
+  name: path,
+  children: tree,
+};
+
+
+
+const handleSave = async () => {
+  setIsSaving(true)
+  console.log("output", outputCode)
+  const requestBody = {
+    // Provide the necessary data here
+    git_id: 11830307,
+    inputcode: inputCode,
+    outputcode: outputCode,
+    originalreporturl: projectId
+  }
+
+try {
+  const response = await fetch('/api/update', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update data');
+  }
+
+  const data = await response.json();
+  console.log('Response data:', data);
+} catch (error) {
+  console.error('Error inserting dummy data:', error);
+}
+setIsSaving(false)
+};
 
   return (
     <>
@@ -233,16 +340,13 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="flex h-full min-h-screen flex-col items-center bg-[#0E1117] px-4 pb-20 text-neutral-200 sm:px-10">
-        <NavBar />
         <div className="mt-10 flex flex-col items-center justify-center sm:mt-20">
           <div className="text-4xl font-bold">
             AI Powered Localization Effort
           </div>
         </div>
-        {/* <div className="mt-6 text-center text-sm">
-          <APIKeyInput apiKey={apiKey} onChange={handleApiKeyChange} />
-        </div> */}
         <div className="mt-6 text-center text-sm">
+          <p>Gitlab Project URL or ID: </p>
           <input
             className="mt-1 h-[24px] w-[280px] rounded-md border border-gray-300 px-3 py-2 text-black shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
             type="text"
@@ -252,8 +356,6 @@ export default function Home() {
           />
         </div>
         <div className="mt-2 flex items-center space-x-2">
-          <ModelSelect model={model} onChange={(value) => setModel(value)} />
-
           <button
             className="w-[140px] cursor-pointer rounded-md bg-violet-500 px-4 py-2 font-bold hover:bg-violet-600 active:bg-violet-700"
             onClick={() => handleTranslate()}
@@ -271,56 +373,6 @@ export default function Home() {
           </button>
         </div>{' '}
         <br />
-        {projectId && (
-          <div>
-            <Table className="bg-gray-800 text-white">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">Name</TableHead>
-                  <TableHead className="w-[300px]">Type</TableHead>
-                  <TableHead className="w-[200px]">Path</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.isArray(data) &&
-                  data.slice(startIndex, endIndex).map((item: GitLabItem) => (
-                    <TableRow
-                      key={item.id}
-                      onClick={() => fetchRawContent(item.id, item.name)}
-                      className="cursor-pointer bg-slate-900 hover:bg-slate-950"
-                    >
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <FileCodeIcon className="text-yellow-400" />
-                          <span>{item.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.type}</TableCell>
-                      <TableCell>{item.path}</TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-
-            <div className="pagination-controls mt-4 flex items-center justify-center space-x-4">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="cursor-pointer rounded-md bg-gray-600 px-3 py-1 text-white"
-              >
-                Previous
-              </button>
-              <span className="text-white">{`Page ${currentPage} of ${totalPages}`}</span>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="cursor-pointer rounded-md bg-gray-600 px-3 py-1 text-white"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
         <div className="mt-2 text-center text-xs">
           {loading
             ? 'Translating...'
@@ -328,8 +380,34 @@ export default function Home() {
             ? 'Output copied to clipboard!'
             : 'Enter an id, click on a file and "Translate" to any selected language'}
         </div>
-        <div className="mt-6 flex w-full max-w-[1200px] flex-col justify-between sm:flex-row sm:space-x-4">
+
+        <div className="mt-6 flex w-full max-w-[1600px] flex-col justify-between sm:flex-row sm:space-x-4">
+        {projectId && (
+          
+        <TreeView
+  aria-label="file system navigator"
+  defaultCollapseIcon={<ExpandMoreIcon />}
+  defaultExpandIcon={<ChevronRightIcon />}
+  className="bg-slate-900  rounded-lg shadow-md p-4"
+>
+<div className="text-center text-xl font-bold">{path}</div>
+  {renderTree(treeData.children || [])} 
+  <div className="flex items-center mt-4">
+    <button 
+      onClick={handleNavigateBack}
+      className="flex items-center text-gray-600 hover:text-gray-500 transition-colors focus:outline-none"
+    >
+      <ChevronLeftIcon className="mr-2 h-4 w-4" />
+      Navigate Back
+    </button>
+  </div>
+</TreeView>
+        )}
+
+
+
           <div className="h-100 flex flex-col justify-center space-y-2 sm:w-2/4">
+
             <div className="text-center text-xl font-bold">{tag}</div>
 
             <LanguageSelect
@@ -362,11 +440,26 @@ export default function Home() {
               }}
             />
 
-            {outputLanguage === 'Natural Language' ? (
+            {textOutput === true ? (
               <TextBlock text={outputCode} />
             ) : (
               <CodeBlock code={outputCode} />
-            )}
+            )
+            }
+
+           <button
+             className={`bg-blue-600 w-full hover:bg-blue-700 text-white font-bold mt-6 py-2 px-4 rounded
+               ${
+                isSaving
+                   ? "cursor-not-allowed opacity-50"
+                   : ""
+               }`}
+             type="submit"
+             disabled={isSaving   }
+             onClick={handleSave}
+           >
+             {isSaving ? "Saving Translation" : "Save Translation"}
+           </button>
           </div>
         </div>
       </div>
@@ -396,4 +489,42 @@ export default function Home() {
       </svg>
     );
   }
+}
+
+function FolderIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>,) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
+    </svg>
+  )
+}
+
+function ChevronLeftIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  )
 }
