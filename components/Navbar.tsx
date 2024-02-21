@@ -53,7 +53,7 @@ export default function Navbar() {
           // Handle the user information as needed
           console.log('User Information:', user);
           setUserInfo(user);
-          console.log("Avatar", user.avatar_url)
+          console.log("Avatar", user.id)
 
           const requestBody = {
             // Provide the necessary data here
@@ -63,13 +63,6 @@ export default function Navbar() {
             avatar_url: user.avatar_url,
             web_url: user.web_url,
             email: user.email,
-            resultlist: [
-              {
-                inputcode: "some code",
-                outputcode: "some code",
-                originalreporturl: "https://example.com/report3"
-              }
-            ]
           }
           
 

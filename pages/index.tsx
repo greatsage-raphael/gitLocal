@@ -21,17 +21,20 @@ interface GitLabItem {
   children?: GitLabItem[];
 }
 
+
+
 export default function Home() {
-  const [inputLanguage, setInputLanguage] = useState<string>('JavaScript');
-  const [outputLanguage, setOutputLanguage] = useState<string>('Python');
+  const [inputLanguage, setInputLanguage] = useState<string>('English');
+  const [outputLanguage, setOutputLanguage] = useState<string>('Arabic');
   const [inputCode, setInputCode] = useState<string>('');
   const [outputCode, setOutputCode] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [explaining, setExplaining] = useState<boolean>(false);
   const [loader, setLoader] = useState<boolean>(false);
   const [hasTranslated, setHasTranslated] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [projectId, setProjectId] = useState<string>('');
-  const [data, setData] = useState<GitLabItem[]>([]);
+  const [gitData, setGitData] = useState<GitLabItem[]>([]);
   const [tree, setTreeView] = useState<GitLabItem[]>([]);
   const [tag, setTag] = useState<string | null>(null);
   const [textOutput, setTextOutput] = useState<boolean>(false);
@@ -40,7 +43,6 @@ export default function Home() {
   const [userId, setUserId] = useState<string>('');
   const [path, setPath] = useState<string>('Fetched Repo');
   const [currentPath, setCurrentPath] = useState<string[]>([]);
-  
 
   const handleTranslate = async () => {
     const maxCodeLength = 12000;
@@ -48,72 +50,73 @@ export default function Home() {
       alert('Please select different languages.');
       return;
     }
-
+  
     if (!inputCode) {
       alert('Please enter some code.');
       return;
     }
-
+  
     if (inputCode.length > maxCodeLength) {
       alert(
         `Please enter code less than ${maxCodeLength} characters. You are currently at ${inputCode.length} characters.`,
       );
       return;
     }
-
+  
     setLoading(true);
     setOutputCode('');
-
+  
     const controller = new AbortController();
-
+  
     const body: TranslateBody = {
       inputLanguage,
       outputLanguage,
       inputCode,
     };
+  
+    try {
+      const response = await fetch('/api/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+        body: JSON.stringify(body),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Something went wrong.');
+      }
+  
+      const responseBody = response.body;
+      if (!responseBody) {
+        throw new Error('Response body is null.');
+      }
+  
+      const reader = responseBody.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let translatedCode = '';
+  
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        translatedCode += chunkValue;
 
-    const response = await fetch('/api/translate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal,
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
+        setOutputCode((prevCode) => prevCode + chunkValue);
+      }
+  
+      
+      setLoading(false);
+      setHasTranslated(true);
+    } catch (error) {
       setLoading(false);
       alert('Something went wrong.');
-      return;
+      console.error('Translation error:', error);
     }
-
-    const data = response.body;
-
-    if (!data) {
-      setLoading(false);
-      alert('Something went wrong.');
-      return;
-    }
-
-    const reader = data.getReader();
-    const decoder = new TextDecoder();
-    let done = false;
-    let code = '';
-
-    while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-      const chunkValue = decoder.decode(value);
-
-      code += chunkValue;
-
-      setOutputCode((prevCode) => prevCode + chunkValue);
-    }
-
-    setLoading(false);
-    setHasTranslated(true);
-    copyToClipboard(code);
   };
+  
 
   const copyToClipboard = (text: string) => {
     const el = document.createElement('textarea');
@@ -128,16 +131,15 @@ export default function Home() {
     setProjectId(e.target.value);
   };
 
-  useEffect(() => {
-    if (hasTranslated) {
-      handleTranslate();
-    }
-  }, [outputLanguage, handleTranslate, hasTranslated]);
+  // useEffect(() => {
+  //   if (hasTranslated) {
+  //     handleTranslate();
+  //   }
+  // }, [outputLanguage, hasTranslated]);
 
   
 
   const fetchRawContent = async (blobId: string, name: string) => {
-    setOutputCode('');
     try {
       const response = await fetch(
         `https://gitlab.com/api/v4/projects/${encodedID}/repository/blobs/${blobId}/raw`,
@@ -191,7 +193,7 @@ export default function Home() {
           (item: { type: string }) => item.type !== 'tree',
         );
 
-        setData(filteredData);
+        setGitData(filteredData);
         setTreeView(treeData);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -201,29 +203,30 @@ export default function Home() {
     fetchData();
   }, [projectId]);
 
-  async function generateExplanation() {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setTextOutput(true)
+  // async function generateExplanation() {
+  //   await new Promise((resolve) => setTimeout(resolve, 500));
+  //   setTextOutput(true)
+  //    setExplaining(true)
+  //   const res = await fetch('/api/explain', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({ code: inputCode }),
+  //   });
 
-    const res = await fetch('/api/explain', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ code: inputCode }),
-    });
-
-    let explanation = await res.json();
-    // console.log('Explain shit', explanation);
-    const combinedString = explanation.join('');
-    console.log('Explain shit', combinedString);
-    if (res.status !== 200) {
-      console.log('fail:', explanation);
-    } else {
-      setOutputCode(combinedString)
-    }
-    setLoader(false);
-  }
+  //   let explanation = await res.json();
+  //   // console.log('Explain shit', explanation);
+  //   const combinedString = explanation.join('');
+  //   console.log('Explain shit', combinedString);
+  //   if (res.status !== 200) {
+  //     console.log('fail:', explanation);
+  //   } else {
+  //     setOutputCode(combinedString)
+  //   }
+  //   setExplaining(false)
+  
+  // }
 
 
 const renderTree = (nodes: GitLabItem[], parentPath: string = '') => {
@@ -363,15 +366,7 @@ setIsSaving(false)
           >
             {loading ? 'Translating...' : 'Translate'}
           </button>
-
-          <button
-            className="w-[140px] cursor-pointer rounded-md bg-violet-500 px-4 py-2 font-bold hover:bg-violet-600 active:bg-violet-700"
-            onClick={() => generateExplanation()}
-            disabled={loading}
-          >
-            {loading ? 'Explaining...' : 'Explain'}
-          </button>
-        </div>{' '}
+        </div>
         <br />
         <div className="mt-2 text-center text-xs">
           {loading
@@ -440,7 +435,8 @@ setIsSaving(false)
               }}
             />
 
-            {textOutput === true ? (
+            {
+            textOutput === true ? (
               <TextBlock text={outputCode} />
             ) : (
               <CodeBlock code={outputCode} />

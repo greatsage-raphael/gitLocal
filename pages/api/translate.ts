@@ -10,17 +10,17 @@ const handler = async (req: Request): Promise<Response> => {
     const { inputLanguage, outputLanguage, inputCode } =
       (await req.json()) as TranslateBody;
 
-      const model = 'gpt-4'
+     const model = 'gpt-3.5-turbo'
 
-      const apikey = process.env.OPENAI_API_KEY || ''
 
     const stream = await OpenAIStream(
       inputLanguage,
       outputLanguage,
       inputCode,
       model,
-      apikey,
     );
+
+    //console.log("stream", stream)
 
     return new Response(stream);
   } catch (error) {

@@ -37,7 +37,7 @@ export default async function handler(
     // Update the data
     const updatedData = await ReadData({ git_id });
 
-    console.log("Data :", updatedData)
+    //console.log("Data :", updatedData)
 
     res.status(200).json(updatedData);
   } catch (error) {

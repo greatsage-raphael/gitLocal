@@ -11,33 +11,48 @@ const createPrompt = (
   inputCode: string,
 ) => {
     return endent`
-      You are a translations expert of many human languages. Translate the "${inputLanguage}" code to "${outputLanguage}" code. Do not include \`\`\`.
+      You are an expert in localization, focusing on translating comments within code files from one language to another. Your task is to translate the code comments from ${inputLanguage} to ${outputLanguage}, while preserving the code structure and functionality. Do not modify the code itself, only the comments.Do not include \`\`\`.
+      Example translating from Mandarin to English:
   
-      Example translating from JavaScript to Python:
-  
-      JavaScript code:
-      for (let i = 0; i < 10; i++) {
-        console.log(i);
-      }
-  
-      Python code:
-      for i in range(10):
-        print(i)
-      
-      ${inputLanguage} code:
-      ${inputCode}
+      Mandarin commented code:
+      /**
+ * 用于将两个数字相加的函数。
+ * @param {number} num1 - 要相加的第一个数字。
+ * @param {number} num2 - 要相加的第二个数字。
+ * @returns {number} num1 和 num2 的和。
+ */
+function adder(num1, num2){
+    return num1 + num2;
+}
 
-      ${outputLanguage} code (no \`\`\`):
+// 将 adder 函数导出以在其他模块中使用。
+module.exports = adder;
+
+  
+      English commented code:
+      /**
+ * Function to add two numbers.
+ * @param {number} num1 - The first number to be added.
+ * @param {number} num2 - The second number to be added.
+ * @returns {number} The sum of num1 and num2.
+ */
+function adder(num1, num2){
+    return num1 + num2;
+}
+
+// Exporting the adder function to be used in other modules.
+module.exports = adder;
+
+
+Here is the input code whose code comments in are to be translated: ${inputCode}    
      `;
   }
-
 
 export const OpenAIStream = async (
   inputLanguage: string,
   outputLanguage: string,
   inputCode: string,
   model: string,
-  key: string,
 ) => {
   const prompt = createPrompt(inputLanguage, outputLanguage, inputCode);
 
@@ -46,7 +61,7 @@ export const OpenAIStream = async (
   const res = await fetch(`https://api.openai.com/v1/chat/completions`, {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
     },
     method: 'POST',
     body: JSON.stringify({
