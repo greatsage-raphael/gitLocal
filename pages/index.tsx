@@ -8,6 +8,7 @@ import { TreeView } from '@mui/x-tree-view/TreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { useUser } from '../contex/UserContex';
 
 interface GitLabDataProps {
   projectId: string;
@@ -43,6 +44,9 @@ export default function Home() {
   const [userId, setUserId] = useState<string>('');
   const [path, setPath] = useState<string>('Fetched Repo');
   const [currentPath, setCurrentPath] = useState<string[]>([]);
+
+  const { user } = useUser();
+  console.log("USER ID :", user?.id);
 
   const handleTranslate = async () => {
     const maxCodeLength = 12000;
@@ -131,11 +135,6 @@ export default function Home() {
     setProjectId(e.target.value);
   };
 
-  // useEffect(() => {
-  //   if (hasTranslated) {
-  //     handleTranslate();
-  //   }
-  // }, [outputLanguage, hasTranslated]);
 
   
 
@@ -300,11 +299,15 @@ const treeData = {
 
 
 const handleSave = async () => {
+  if (!user) {
+    alert('Please sign in');
+    return;
+  }
   setIsSaving(true)
   console.log("output", outputCode)
   const requestBody = {
     // Provide the necessary data here
-    git_id: 11830307,
+    git_id: user?.id,
     inputcode: inputCode,
     outputcode: outputCode,
     originalreporturl: projectId
@@ -329,6 +332,7 @@ try {
   console.error('Error inserting dummy data:', error);
 }
 setIsSaving(false)
+setInputCode("")
 };
 
   return (
@@ -351,12 +355,18 @@ setIsSaving(false)
         <div className="mt-6 text-center text-sm">
           <p>Gitlab Project URL or ID: </p>
           <input
-            className="mt-1 h-[24px] w-[280px] rounded-md border border-gray-300 px-3 py-2 text-black shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 mx-2 h-[24px] w-[280px] rounded-md border border-gray-300 px-3 py-2 text-black shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
             type="text"
             id="projectId"
             value={projectId}
             onChange={handleInputChange}
           />
+          <button
+    className="cursor-pointer rounded-md bg-slate-500 px-4 py-2 font-bold text-white hover:bg-slate-600 active:bg-slate-700"
+    onClick={() => setProjectId('')}
+  >
+    Clear
+  </button>
         </div>
         <div className="mt-2 flex items-center space-x-2">
           <button

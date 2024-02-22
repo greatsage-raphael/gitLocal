@@ -4,12 +4,15 @@ import GitLabAuth from '../utils/auth';
 import { useRouter } from 'next/router';
 import axios from "axios";
 import Image from "next/image";
+import { useUser } from '../contex/UserContex';
 
 export default function Navbar() {
   
   
   const [authUrl, setAuthUrl] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
+  // Inside your Navbar component
+ const { setUser } = useUser();
 
   const handleLogin = () => {
     
@@ -54,6 +57,7 @@ export default function Navbar() {
           console.log('User Information:', user);
           setUserInfo(user);
           console.log("Avatar", user.id)
+          setUser({ id: user.id });
 
           const requestBody = {
             // Provide the necessary data here

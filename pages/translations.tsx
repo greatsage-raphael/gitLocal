@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { TextBlock } from "../components/TextBlock"; 
 import { CodeBlock } from "../components/CodeBlock"; 
 import Link from "next/link";
+import { useUser } from '../contex/UserContex';
 
 interface Translation {
   resultlist: {
@@ -13,11 +14,13 @@ interface Translation {
 
 export default function Translations() {
   const [translations, setTranslations] = useState<Translation[]>([]);
+  const { user } = useUser();
+  console.log("USER ID :", user?.id);
 
   useEffect(() => {
     const handleRead = async () => {
       const requestBody = {
-        git_id: 11830307,
+        git_id: user?.id,
       };
       try {
         const response = await fetch('/api/read', {
@@ -57,7 +60,7 @@ export default function Translations() {
                </Link>
                   <CodeBlock code={item.inputcode} />
                   </div>
-                <div className="flex-grow"><TextBlock text={item.outputcode} /></div>
+                <div className="flex-grow"><CodeBlock code={item.outputcode} /></div>
               </div>
             ))}
           </div>
