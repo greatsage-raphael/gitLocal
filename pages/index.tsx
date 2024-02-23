@@ -146,6 +146,7 @@ export default function Home() {
       const rawContent = await response.text();
       setInputCode(rawContent);
       setTag(name);
+      setOutputCode("")
     } catch (error) {
       console.error('Error fetching raw content:', error);
     }
@@ -228,24 +229,22 @@ export default function Home() {
   // }
 
 
-const renderTree = (nodes: GitLabItem[], parentPath: string = '') => {
-  return nodes.map(node => (
-    <TreeItem
-      key={node.id}
-      nodeId={node.id}
-      label={node.name}
-      onClick={() => handleNodeClick(node)}
-      // Check if the node is a folder (tree) and render its children if expanded
-      // Otherwise, render nothing
-      children={node.type === 'tree' && node.path.startsWith(parentPath)
-        ? renderTree(node.children || [], node.path)
-        : null}
-      // Set the tree node's icon based on its type (folder or file)
-      icon={node.type === 'tree' ? <FolderIcon /> : <FileCodeIcon />}
-    />
-  ));
-};
-
+  const renderTree = (nodes: GitLabItem[], parentPath: string = '') => {
+    return nodes.map(node => (
+      <TreeItem
+        key={node.id}
+        nodeId={node.id}
+        label={node.name}
+        onClick={() => handleNodeClick(node)}
+        icon={node.type === 'tree' ? <FolderIcon /> : <FileCodeIcon />}
+      >
+        {node.type === 'tree' && node.path.startsWith(parentPath) &&
+          renderTree(node.children || [], node.path)
+        }
+      </TreeItem>
+    ));
+  };
+  
 // Modify handleNodeClick function
 const handleNodeClick = async (node: GitLabItem) => {
     if (node.type === 'tree') {
@@ -332,7 +331,6 @@ try {
   console.error('Error inserting dummy data:', error);
 }
 setIsSaving(false)
-setInputCode("")
 };
 
   return (
