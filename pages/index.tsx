@@ -38,6 +38,7 @@ export default function Home() {
   const [gitData, setGitData] = useState<GitLabItem[]>([]);
   const [tree, setTreeView] = useState<GitLabItem[]>([]);
   const [tag, setTag] = useState<string | null>(null);
+  const [OutPutTag, setOutputTag] = useState<string | null>(null);
   const [textOutput, setTextOutput] = useState<boolean>(false);
   const [accessToken, setAccessToken] = useState<string>('');
   const [encodedID, setEncodedID] = useState<string>('');
@@ -381,7 +382,7 @@ setIsSaving(false)
             ? 'Translating...'
             : hasTranslated
             ? 'Output copied to clipboard!'
-            : 'Enter an id, click on a file and "Translate" to any selected language'}
+            : 'Enter a gitlab url, click on a file and "Translate" to any selected language'}
         </div>
 
         <div className="mt-6 flex w-full max-w-[1600px] flex-col justify-between sm:flex-row sm:space-x-4">
