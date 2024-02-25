@@ -66,9 +66,11 @@ export default function Translations() {
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="flex-grow mr-4">
+                          <p>Input code:</p>
                           <CodeBlock code={item.inputcode} />
                         </div>
                         <div className="flex-grow">
+                        <p>OutPut code:</p>
                           <CodeBlock code={item.outputcode} />
                         </div>
                       </AccordionContent>
