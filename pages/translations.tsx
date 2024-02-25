@@ -20,7 +20,7 @@ export default function Translations() {
   useEffect(() => {
     const handleRead = async () => {
       const requestBody = {
-        git_id: 11830307,
+        git_id: user?.id,
       };
       try {
         const response = await fetch('/api/read', {

@@ -1,8 +1,10 @@
-# AI Code Translator
+# Git Localizer
 
 Use AI to translate code comments, filenames from one language to another.
 
 ![GitLocalizer](./public/screenshot.png)
+
+
 
 ## Running Locally
 
