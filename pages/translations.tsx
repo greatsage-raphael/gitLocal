@@ -60,9 +60,9 @@ export default function Translations() {
                   <Accordion className="w-full" collapsible type="single" key={idx}>
                     <AccordionItem value={item.originalreporturl}>
                       <AccordionTrigger className="text-base">
-                        <Link href={item.originalreporturl} className="text-2xl no-underline hover:text-slate-300 mx-2">
+                        <p className="text-2xl no-underline hover:text-slate-300 mx-2">
                           {item.originalreporturl}
-                        </Link>
+                        </p>
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="flex-grow mr-4">
