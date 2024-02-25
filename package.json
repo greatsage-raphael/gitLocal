@@ -16,6 +16,7 @@
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
     "@mui/x-tree-view": "^6.17.0",
+    "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-slot": "^1.0.2",
