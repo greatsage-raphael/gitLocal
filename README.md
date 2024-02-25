@@ -1,15 +1,15 @@
 # AI Code Translator
 
-Use AI to translate code from one language to another.
+Use AI to translate code comments, filenames from one language to another.
 
-![AI Code Translator](./public/screenshot.png)
+![GitLocalizer](./public/screenshot.png)
 
 ## Running Locally
 
 **1. Clone Repo**
 
 ```bash
-git clone https://github.com/mckaywrigley/ai-code-translator.git
+git clone https://gitlab.com/collinsLubwama/gitlocalizer
 ```
 
 **2. Install Dependencies**
@@ -26,4 +26,4 @@ npm run dev
 
 ## Contact
 
-If you have any questions, feel free to reach out to me on [Twitter](https://twitter.com/mckaywrigley).
+If you have any questions, feel free to reach out to me on [Twitter](https://twitter.com/thesupremesage).
