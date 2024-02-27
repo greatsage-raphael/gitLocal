@@ -121,7 +121,6 @@ export default function Home() {
       alert('Something went wrong.');
       console.error('Translation error:', error);
     }
-    handleSave()
   };
   
 
