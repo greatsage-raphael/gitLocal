@@ -68,6 +68,7 @@ export default function Home() {
       return;
     }
   
+    setTextOutput(false)
     setLoading(true);
     setOutputCode('');
   
@@ -115,6 +116,7 @@ export default function Home() {
       
       setLoading(false);
       setHasTranslated(true);
+      handleSave()
     } catch (error) {
       setLoading(false);
       alert('Something went wrong.');
@@ -204,30 +206,74 @@ export default function Home() {
     fetchData();
   }, [projectId]);
 
-  // async function generateExplanation() {
-  //   await new Promise((resolve) => setTimeout(resolve, 500));
-  //   setTextOutput(true)
-  //    setExplaining(true)
-  //   const res = await fetch('/api/explain', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({ code: inputCode }),
-  //   });
-
-  //   let explanation = await res.json();
-  //   // console.log('Explain shit', explanation);
-  //   const combinedString = explanation.join('');
-  //   console.log('Explain shit', combinedString);
-  //   if (res.status !== 200) {
-  //     console.log('fail:', explanation);
-  //   } else {
-  //     setOutputCode(combinedString)
-  //   }
-  //   setExplaining(false)
+  const handleGeneration = async () => {
+    setTextOutput(true)
+    const maxCodeLength = 12000;
   
-  // }
+    if (!inputCode) {
+      alert('Please enter some code.');
+      return;
+    }
+  
+    if (inputCode.length > maxCodeLength) {
+      alert(
+        `Please enter code less than ${maxCodeLength} characters. You are currently at ${inputCode.length} characters.`,
+      );
+      return;
+    }
+  
+    setExplaining(false);
+    setOutputCode('');
+  
+    const controller = new AbortController();
+  
+    const body: TranslateBody = {
+      inputLanguage,
+      outputLanguage,
+      inputCode,
+    };
+  
+    try {
+      const response = await fetch('/api/explain', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+        body: JSON.stringify(body),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Something went wrong.');
+      }
+  
+      const responseBody = response.body;
+      if (!responseBody) {
+        throw new Error('Response body is null.');
+      }
+  
+      const reader = responseBody.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let GeneratedText = '';
+  
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        GeneratedText += chunkValue;
+
+        setOutputCode((prevCode) => prevCode + chunkValue);
+      }
+    
+      setExplaining(false);
+    } catch (error) {
+      setLoading(false);
+      alert('Something went wrong.');
+      console.error('Translation error:', error);
+    }
+  };
+  
 
 
   const renderTree = (nodes: GitLabItem[], parentPath: string = '') => {
@@ -296,13 +342,15 @@ const treeData = {
   children: tree,
 };
 
-
-
 const handleSave = async () => {
   if (!user) {
-    alert('Please sign in');
+    alert('Please sign in to save translations');
     return;
   }
+
+  
+
+
   setIsSaving(true)
   console.log("output", outputCode)
   const requestBody = {
@@ -374,6 +422,14 @@ setIsSaving(false)
             disabled={loading}
           >
             {loading ? 'Translating...' : 'Translate'}
+          </button>
+
+          <button
+            className="w-[140px] cursor-pointer rounded-md bg-violet-500 px-4 py-2 font-bold hover:bg-violet-600 active:bg-violet-700"
+            onClick={() => handleGeneration()}
+            disabled={loading}
+          >
+            {explaining ? 'Explaining...' : 'Explain'}
           </button>
         </div>
         <br />
@@ -452,7 +508,7 @@ setIsSaving(false)
             )
             }
 
-           <button
+           {/* <button
              className={`bg-blue-600 w-full hover:bg-blue-700 text-white font-bold mt-6 py-2 px-4 rounded
                ${
                 isSaving
@@ -464,7 +520,7 @@ setIsSaving(false)
              onClick={handleSave}
            >
              {isSaving ? "Saving Translation" : "Save Translation"}
-           </button>
+           </button> */}
           </div>
         </div>
       </div>

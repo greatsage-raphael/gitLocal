@@ -1,40 +1,32 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import Replicate from 'replicate'
+import { TranslateBody } from '@/types/types';
+import { OpenAIExplain } from '../../utils/explain';
 
-type Data = any;
+export const config = {
+  runtime: 'edge',
+};
 
-interface ExtendedNextApiRequest extends NextApiRequest {
-  body: {
-    code: string;
-  };
-}
+const handler = async (req: Request): Promise<Response> => {
+  try {
+    const { inputLanguage, outputLanguage, inputCode } =
+      (await req.json()) as TranslateBody;
 
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_KEY || '',
-})
-
-export default async function handler(
-  req: ExtendedNextApiRequest,
-  res: NextApiResponse<Data>
-) {
+     const model = 'gpt-3.5-turbo'
 
 
-  // POST request to LLAMA_70 Replicate to explain the code contents
-  const code = req.body.code;
-  //console.log("New Age", code)
+    const stream = await OpenAIExplain(
+      inputLanguage,
+      outputLanguage,
+      inputCode,
+      model,
+    );
 
-   // Create a prediction with the stream option set to true
-   const prediction = await replicate.run(
-    'meta/codellama-70b-instruct:a279116fe47a0f65701a8817188601e2fe8f4b9e04a518789655ea7b995851bf',
-    {
-    input: { prompt: code, system_prompt: "Explain the code sample as best as you can." },
-    }
-  );
+    //console.log("stream", stream)
 
-  //const outputLines = output as string[];
+    return new Response(stream);
+  } catch (error) {
+    console.error(error);
+    return new Response('Error', { status: 500 });
+  }
+};
 
-  //console.log("OutPut", prediction)
-
-  res.send(prediction)
-  
-}
+export default handler;
