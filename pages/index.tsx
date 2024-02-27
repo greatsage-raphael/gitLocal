@@ -116,12 +116,12 @@ export default function Home() {
       
       setLoading(false);
       setHasTranslated(true);
-      handleSave()
     } catch (error) {
       setLoading(false);
       alert('Something went wrong.');
       console.error('Translation error:', error);
     }
+    handleSave()
   };
   
 
@@ -508,7 +508,7 @@ setIsSaving(false)
             )
             }
 
-           {/* <button
+           <button
              className={`bg-blue-600 w-full hover:bg-blue-700 text-white font-bold mt-6 py-2 px-4 rounded
                ${
                 isSaving
@@ -520,7 +520,7 @@ setIsSaving(false)
              onClick={handleSave}
            >
              {isSaving ? "Saving Translation" : "Save Translation"}
-           </button> */}
+           </button>
           </div>
         </div>
       </div>
